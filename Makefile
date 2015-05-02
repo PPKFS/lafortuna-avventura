@@ -19,10 +19,10 @@ CHKFLAGS  :=
 BUILD_DIR := _build
 
 # Ignoring hidden directories; sorting to drop duplicates:
-CFILES := $(shell find.exe . ! -path "*/\.*" -type f -name "*.c")
+CFILES := $(shell find . ! -path "*/\.*" -type f -name "*.c")
 CPATHS := $(sort $(dir $(CFILES)))
 vpath %.c $(CPATHS)
-HFILES := $(shell find.exe . ! -path "*/\.*" -type f -name "*.h")
+HFILES := $(shell find . ! -path "*/\.*" -type f -name "*.h")
 HPATHS := $(sort $(dir $(HFILES)))
 vpath %.h $(HPATHS)
 CFLAGS += $(addprefix -I ,$(HPATHS))
