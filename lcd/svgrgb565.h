@@ -6,10 +6,6 @@
       | 5 bit | 6 bit | 5 bit |
       |-------+-------+-------|
 */
-
-#ifndef SVG
-#define SVG
-
 #define ALICE_BLUE              0xEFBF
 #define ANTIQUE_WHITE           0xF75A
 #define AQUA                    0x07FF
@@ -170,4 +166,3 @@
   =================================================================
 */
 
-#endif
