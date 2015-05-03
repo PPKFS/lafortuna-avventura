@@ -7,17 +7,13 @@
 #include "ff.h"
 #include "game.h"
 
-#define STEP_DELAY_MS 5
-#define MIN_STEP    2    /* > 0 */
-#define MAX_STEP  255
-
-
 #define CMD_SIZE 80
-#define CMD_TOP 160
-#define CMD_X_MAX 4
-#define CMD_Y_MAX 10
+#define CMD_TOP 200
+#define CMD_X_MAX 3
+#define CMD_Y_MAX 5
 
 #define TITLE_X 40
+#define TITLE_Y 18
 
 void init_lafortuna(void);
 void set_command_pos(int);
@@ -48,19 +44,19 @@ void update_select()
 		select_x = 0;
 	if(select_y < 0)
 		select_y = 0;
-	if(select_y > CMD_Y_MAX)
+	if(select_y >= CMD_Y_MAX)
 		select_y = CMD_Y_MAX;
-	if(select_x > CMD_X_MAX)
+	if(select_x >= CMD_X_MAX)
 		select_x = CMD_X_MAX;
 
 	display_rect();
 	uint8_t i = 0;
 	for(i = 0; i < cur_commands; ++i)
 	{
-		display_string_xy(active_commands[i].name, 0, i*8+CMD_TOP);
+		uint8_t x = (i / CMD_Y_MAX) * 80;
+		uint8_t y = (i % (CMD_Y_MAX)) * 8 + CMD_TOP;
+		display_string_xy(active_commands[i].name, x, y);
 	}
-	display_welcome();
-	
 }
 
 int multi_stage_command(command* x)

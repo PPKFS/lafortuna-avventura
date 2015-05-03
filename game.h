@@ -17,6 +17,7 @@ typedef struct
 	char* name;
 	char* desc;
 	uint8_t connections[4];
+	void (*update)(void*, uint8_t);
 
 } room;
 
