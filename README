@@ -2,4 +2,6 @@ LaFortuna-Avventura
 
 A simple text adventure game based on the hardware of the LaFortuna board. Your goal is to reach the CPU and defeat the evil monster!
 
-Uses Clytomedes' adaptation of Steve Gunn's LCD library for display and scrolling, as well as Steve Gunn's rotary encoder library.
+Uses Steve Gunn's LCD library for display and scrolling.
+
+Uses various utility, display, and other functions from Klaus-Peter Zauner.
