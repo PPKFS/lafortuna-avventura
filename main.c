@@ -11,17 +11,13 @@
 #define MIN_STEP    2    /* > 0 */
 #define MAX_STEP  255
 
-#define NUM_COMMANDS 10
+
 #define CMD_SIZE 80
 #define CMD_TOP 120
 #define CMD_X_MAX 4
 #define CMD_Y_MAX 10
 
 #define TITLE_X 40
-
-char* commands[NUM_COMMANDS] = {"look", "examine", "west", "east", "north", "south", "use", "eat", "open", "close"};
-
-char** active_commands = commands;
 
 void init_lafortuna(void);
 void set_command_pos(int);
@@ -30,7 +26,6 @@ int check_switches(int);
 int cur_commands = NUM_COMMANDS;
 int select_x = 0;
 int select_y = 0;
-
 
 void display_welcome()
 {
@@ -62,10 +57,22 @@ void update_select()
 	uint8_t i = 0;
 	for(i = 0; i < cur_commands; ++i)
 	{
-		display_string_xy(active_commands[i], 0, i*8+CMD_TOP);
+		display_string_xy(active_commands[i].name, 0, i*8+CMD_TOP);
 	}
 	display_welcome();
 	
+}
+
+int multi_stage_command(command* x)
+{
+	return 0;
+}
+
+void clear_main()
+{
+	rectangle r = {0, display.width, 0, CMD_TOP};
+	fill_rectangle(r, 0x0000);
+	display_welcome();
 }
 
 void do_select()
@@ -74,9 +81,12 @@ void do_select()
 	int selection = (select_x*CMD_Y_MAX) + select_y;
 	if(selection >= cur_commands)
 		return;
-
-	display_string("You selected the command:");
-	display_string(active_commands[selection]);
+	if(!active_commands[selection].actions)
+		clear_main();
+	display_string(">");
+	display_string(active_commands[selection].name);
+	display_string("\n");
+	do_command(selection);
 }
 
 
@@ -88,6 +98,7 @@ void main(void)
 
     display_welcome();
     init_game();
+    update_select();
     while(1)
     {
     }
