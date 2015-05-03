@@ -15,11 +15,12 @@
 #define TITLE_X 40
 #define TITLE_Y 18
 
+#define NELEM(x) (sizeof(x)/(sizeof(x[0])))
 void init_lafortuna(void);
 void set_command_pos(int);
 int check_switches(int);
 
-int cur_commands = NUM_COMMANDS;
+int is_submenu = 0;
 int select_x = 0;
 int select_y = 0;
 
@@ -35,7 +36,28 @@ void display_rect()
 	rectangle r2 = {r.left + 1, r.right-1, r.top+1, r.bottom-1};
 	fill_rectangle(r, 0xFFFF);
 	fill_rectangle(r2, 0x0000);
+
 }
+
+uint8_t min(uint8_t a, uint8_t b)
+{
+	return a <= b ? a : b;
+}
+
+void get_list_of_things()
+{
+	uint8_t i = 0;
+	for(i = 0; i < NUM_COMMANDS; ++i)
+		things[i] = 0;
+	things[0] = "yourself";
+	for(i = 1; i <min(NUM_COMMANDS, NELEM(rooms[player_pos].items)); ++i)
+	{
+		if(rooms[player_pos].items[i-1] == 255)
+			return;
+		things[i] = items[rooms[player_pos].items[i-1]].name;
+	}
+}
+
 void update_select()
 {
 	rectangle clr = {0, display.width, CMD_TOP, display.height};
@@ -51,17 +73,27 @@ void update_select()
 
 	display_rect();
 	uint8_t i = 0;
-	for(i = 0; i < cur_commands; ++i)
+	if(!is_submenu)
 	{
-		uint8_t x = (i / CMD_Y_MAX) * 80;
-		uint8_t y = (i % (CMD_Y_MAX)) * 8 + CMD_TOP;
-		display_string_xy(active_commands[i].name, x, y);
+		for(i = 0; i < NELEM(commands); ++i)
+		{
+			uint8_t x = (i / CMD_Y_MAX) * 80;
+			uint8_t y = (i % (CMD_Y_MAX)) * 8 + CMD_TOP;
+			display_string_xy(commands[i].name, x, y);
+		}
 	}
-}
-
-int multi_stage_command(command* x)
-{
-	return 0;
+	else
+	{
+		get_list_of_things();
+		for(i = 0; i < NELEM(things); ++i)
+		{
+			if(things[i] == 0)
+				return;
+			uint8_t x = (i / CMD_Y_MAX) * 80;
+			uint8_t y = (i % (CMD_Y_MAX)) * 8 + CMD_TOP;
+			display_string_xy(things[i], x, y);
+		}
+	}
 }
 
 void clear_main()
@@ -75,14 +107,38 @@ void do_select()
 {
 	update_select();
 	int selection = (select_x*CMD_Y_MAX) + select_y;
-	if(selection >= cur_commands)
-		return;
-	if(!active_commands[selection].actions)
-		clear_main();
-	display_string(">");
-	display_string(active_commands[selection].name);
-	display_string("\n");
-	do_command(selection);
+	clear_main();
+	if(!is_submenu)
+	{
+		if(selection >= NELEM(commands))
+			return;
+		if(!commands[selection].actions)
+		{		
+			display_string(">");
+			display_string(commands[selection].name);
+			display_string("\n");
+			do_command(selection);
+		}
+		else
+		{
+			display_string("What do you want to ");
+			display_string(commands[selection].name);
+			display_string("?\n");
+			is_submenu = 1;
+			update_select();
+		}
+	}
+	else
+	{
+		if(selection >= NELEM(things))
+			return;
+		display_string(">");
+		display_string(things[selection]);
+		display_string("\n");
+
+		is_submenu = 0;
+		update_select();
+	}
 }
 
 

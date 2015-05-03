@@ -6,7 +6,7 @@
 #define OUTSIDE 0
 #define SD1 1
 #define CORRIDOR_1 2
-#define CORRIDOR_2 3
+#define UNUSED 3
 #define IC1 4
 #define IC2 5
 #define IC3 6
@@ -26,10 +26,12 @@
 #define CORRIDOR_FINAL 20
 #define LCD_SCREEN_ROOM 21
 #define OUTSIDE_2 22
+#define NO_ROOM 255
 
 #define IC_FLAVOUR "You are standing in a large, spacious room. This seems to be the main unit of the board."
 
-#define NO_ROOM 255
+#define SD_HELP_CARD 0
+#define NO_ITEM 255
 
 #define DIR_NORTH 0
 #define DIR_SOUTH 1
@@ -40,7 +42,7 @@
 #define DESCRIPTION 1
 #define LED_SWITCH 2
 
-int player_pos = OUTSIDE;
+uint8_t player_pos = OUTSIDE;
 
 command commands[NUM_COMMANDS] = {
 	{"north", north, 0}, 
@@ -54,7 +56,9 @@ command commands[NUM_COMMANDS] = {
 	{"open", open, 1},
 	{"close", close, 1}};
  
-command* active_commands = commands;
+char* things[NUM_COMMANDS] = {0};
+
+item items[NUM_ITEMS] = {{"Help Manual", "An SD card someone has scribbled 'Help Manual' over.", 0}}; 
 
 void die()
 {
@@ -158,47 +162,48 @@ void ded_room(room* r, uint8_t action)
 
 room rooms[NUM_ROOMS] = {
 	{"Outside", 
-	"You are outside the LaFortuna. It is really, really hot out here.", {NO_ROOM, NO_ROOM, SD1, NO_ROOM}, outside_room},
-	{"SD Card Slot", "You are standing in the SD card slot.", {NO_ROOM, NO_ROOM, CORRIDOR_1, OUTSIDE}, 0},
-	{"A Corridor", "You find yourself in a dimly lit corridor. The walls are lined with pulsing green lights.", 
-	{NO_ROOM, NO_ROOM, CORRIDOR_2, SD1}, 0},
-	{"A Corridor", "The corridor seems darker now. The lights are all off.", {NO_ROOM, NO_ROOM, IC1, CORRIDOR_1}, 0},
-	{"Integrated Circuit Unit, North Side", IC_FLAVOUR, {NO_ROOM, IC2, RESET, CORRIDOR_2}, 0},
-	{"Integrated Circuit Unit, North-Central Side", IC_FLAVOUR, {IC1, IC3, AVCC, LED_ROOM}, 0},
-	{"Integrated Circuit Unit, South-Central Side", IC_FLAVOUR, {IC2, IC4, USB, SCROLL_CORR}, 0},
-	{"Integrated Circuit Unit, South Side", IC_FLAVOUR, {IC3, BATT, EXT_PIN_1, CORRIDOR_3}, 0},
+	"You are outside the LaFortuna. It is really, really hot out here.", {NO_ROOM, NO_ROOM, SD1, NO_ROOM}, outside_room, {NO_ITEM}},
+	{"SD Card Slot", "You are standing in the SD card slot.", {NO_ROOM, NO_ROOM, CORRIDOR_1, OUTSIDE}, 0, {SD_HELP_CARD, NO_ITEM}},
+	{"corridor", "You find yourself in a dimly lit corridor. The walls are lined with pulsing green lights.", 
+	{NO_ROOM, NO_ROOM, IC1, SD1}, 0, {NO_ITEM}},
+	{"", "", {NO_ROOM, NO_ROOM, NO_ROOM, NO_ROOM}, 0, {NO_ITEM}},
+	{"Integrated Circuit Unit, North Side", IC_FLAVOUR, {NO_ROOM, IC2, RESET, CORRIDOR_1}, 0, {NO_ITEM}},
+	{"Integrated Circuit Unit, North-Central Side", IC_FLAVOUR, {IC1, IC3, AVCC, LED_ROOM}, 0, {NO_ITEM}},
+	{"Integrated Circuit Unit, South-Central Side", IC_FLAVOUR, {IC2, IC4, USB, SCROLL_CORR}, 0, {NO_ITEM}},
+	{"Integrated Circuit Unit, South Side", IC_FLAVOUR, {IC3, BATT, EXT_PIN_1, CORRIDOR_3}, 0, {NO_ITEM}},
 	{"Reset Button", "Above you, you can see the reset switch. You could probably just about reach it from here.",
-	 {NO_ROOM, NO_ROOM, NO_ROOM, IC1}, 0},
+	 {NO_ROOM, NO_ROOM, NO_ROOM, IC1}, 0, {NO_ITEM}},
 	{"AVCC Switch Room", "The walls pulse around you. Everything is oscillating wildly in here. It's giving you a headache.", 
-	{NO_ROOM, NO_ROOM, NO_ROOM, IC2}, 0},
+	{NO_ROOM, NO_ROOM, NO_ROOM, IC2}, 0, {NO_ITEM}},
 	{"LED Room", "", 
-	{NO_ROOM, NO_ROOM, IC2, SD1}, led_room},
+	{NO_ROOM, NO_ROOM, IC2, SD1}, led_room, {NO_ITEM}},
 	{"USB Port", 
 	"As you walk to the edge of the room, you look out the USB socket. It's a long, long way down. You'd probably die if you fell out.", 
-	{NO_ROOM, NO_ROOM, OUTSIDE_2, IC3}, 0},
+	{NO_ROOM, NO_ROOM, OUTSIDE_2, IC3}, 0, {NO_ITEM}},
 	{"Above Scroll Wheel", "You find yourself on a silicon catwalk. Below you is a circular room, split into 5 sections.", 
-	{NO_ROOM, NO_ROOM, IC3, NO_ROOM}, above_scroll_room},
+	{NO_ROOM, NO_ROOM, IC3, NO_ROOM}, above_scroll_room, {NO_ITEM}},
 	{"Scroll Wheel", 
 		"You climb down the ladder and step on the floor of the circular room. The floor seems to depress when you stand on it.", 
-		{NO_ROOM, NO_ROOM, NO_ROOM, NO_ROOM}, 0},
+		{NO_ROOM, NO_ROOM, NO_ROOM, NO_ROOM}, 0, {NO_ITEM}},
 	{"GPIO Pins", 
-	"There are a number of holes above you, light streaming in.", {NO_ROOM, NO_ROOM, NO_ROOM, IC4}, 0},
+	"There are a number of holes above you, light streaming in.", {NO_ROOM, NO_ROOM, NO_ROOM, IC4}, 0, {NO_ITEM}},
 	{"A Corridor", "You find yourself in a dimly lit corridor. The walls are lined with pulsing green lights.", 
-		{EXT_PIN_2, ROTARY, IC4, CORRIDOR_FINAL}, 0},
-	{"Rotary Encoder Control Room", "The room is spinning round and round and round and round...", {CORRIDOR_3, NO_ROOM, NO_ROOM, NO_ROOM}, 0},
-	{"Battery Room Place", "Battery stuff.", {IC4, NO_ROOM, NO_ROOM, CAP_BANK}, 0},
-	{"Capacitor Bank", "CAPACITORS ERRYWHERE.\n", {NO_ROOM, NO_ROOM, BATT, CAP_BANK}, 0},
+		{EXT_PIN_2, ROTARY, IC4, CORRIDOR_FINAL}, 0, {NO_ITEM}},
+	{"Rotary Encoder Control Room", "The room is spinning round and round and round and round...", {CORRIDOR_3, NO_ROOM, NO_ROOM, NO_ROOM}, 
+		0, {NO_ITEM}},
+	{"Battery Room Place", "Battery stuff.", {IC4, NO_ROOM, NO_ROOM, CAP_BANK}, 0, {NO_ITEM}},
+	{"Capacitor Bank", "CAPACITORS ERRYWHERE.\n", {NO_ROOM, NO_ROOM, BATT, CAP_BANK}, 0, {NO_ITEM}},
 	{"GPIO Pins", "There are a number of holes above you, light streaming in.\n", 
-	{NO_ROOM, CORRIDOR_3, NO_ROOM, NO_ROOM}, 0},
+	{NO_ROOM, CORRIDOR_3, NO_ROOM, NO_ROOM}, 0, {NO_ITEM}},
 	{"An Ominous Corridor", 
 	"As you walk down the corridor, you have a very ominous feeling. Almost like something very bad is at the end of the corridor.", 
-	{NO_ROOM, NO_ROOM, CORRIDOR_3, NO_ROOM}, 0},
+	{NO_ROOM, NO_ROOM, CORRIDOR_3, NO_ROOM}, 0, {NO_ITEM}},
 	{"The LCD Screen", 
 	"As you walk into the LCD screen, a cold breeze brushes over you. A giant dragon flies down from the ceiling and lands in front of you.", 
-	{NO_ROOM, NO_ROOM, CORRIDOR_FINAL, NO_ROOM}, final_room},
+	{NO_ROOM, NO_ROOM, CORRIDOR_FINAL, NO_ROOM}, final_room, {NO_ITEM}},
 	{"Outside, Falling", 
 	"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA-splat. I told you it was a long way down.", 
-	{NO_ROOM, NO_ROOM, NO_ROOM, NO_ROOM}, ded_room}
+	{NO_ROOM, NO_ROOM, NO_ROOM, NO_ROOM}, ded_room, {NO_ITEM}}
 };
 
 void print_player_pos()
