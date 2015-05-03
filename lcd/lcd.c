@@ -198,6 +198,8 @@ void display_char(char c) {
         return;
     }
 
+    display.x += 6;
+    if ((display.x+6) >= display.width) { display.x=0; display.y+=8; }
     if (c < 32 || c > 126) return;
     fdata = (c - ' ')*5 + font5x7;
     write_cmd(PAGE_ADDRESS_SET);
@@ -217,10 +219,7 @@ void display_char(char c) {
     write_data16(x);
     write_cmd(MEMORY_WRITE);
     for(y=sp; y<=ep; y++)
-        write_data16(display.background);
-
-    display.x += 6;
-    if (display.x >= display.width) { display.x=0; display.y+=8; }
+        write_data16(display.background);   
 }
 
 void display_string(char *str) {

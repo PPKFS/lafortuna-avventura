@@ -13,7 +13,7 @@
 
 
 #define CMD_SIZE 80
-#define CMD_TOP 120
+#define CMD_TOP 160
 #define CMD_X_MAX 4
 #define CMD_Y_MAX 10
 

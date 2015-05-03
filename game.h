@@ -2,7 +2,7 @@
 #define GAME_H
 
 #define NUM_COMMANDS 10
-#define NUM_ROOMS 10
+#define NUM_ROOMS 23
 
 
 typedef struct 
