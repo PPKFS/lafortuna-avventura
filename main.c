@@ -20,9 +20,10 @@ void init_lafortuna(void);
 void set_command_pos(int);
 int check_switches(int);
 
-int is_submenu = 0;
 int select_x = 0;
 int select_y = 0;
+
+int things_size = 0;
 
 void display_welcome()
 {
@@ -49,13 +50,14 @@ void get_list_of_things()
 	uint8_t i = 0;
 	for(i = 0; i < NUM_COMMANDS; ++i)
 		things[i] = 0;
-	things[0] = "yourself";
+	things[0] = 255;
 	for(i = 1; i <min(NUM_COMMANDS, NELEM(rooms[player_pos].items)); ++i)
 	{
 		if(rooms[player_pos].items[i-1] == 255)
-			return;
-		things[i] = items[rooms[player_pos].items[i-1]].name;
+			break;
+		things[i] = rooms[player_pos].items[i-1];
 	}
+	things_size = i;
 }
 
 void update_select()
@@ -72,6 +74,7 @@ void update_select()
 		select_x = CMD_X_MAX;
 
 	display_rect();
+
 	uint8_t i = 0;
 	if(!is_submenu)
 	{
@@ -85,15 +88,14 @@ void update_select()
 	else
 	{
 		get_list_of_things();
-		for(i = 0; i < NELEM(things); ++i)
+		for(i = 0; i < things_size; ++i)
 		{
-			if(things[i] == 0)
-				return;
 			uint8_t x = (i / CMD_Y_MAX) * 80;
 			uint8_t y = (i % (CMD_Y_MAX)) * 8 + CMD_TOP;
-			display_string_xy(things[i], x, y);
+			display_string_xy(things[i] == 255 ? "yourself" : item_names[things[i]], x, y);	
 		}
 	}
+
 }
 
 void clear_main()
@@ -124,17 +126,19 @@ void do_select()
 			display_string("What do you want to ");
 			display_string(commands[selection].name);
 			display_string("?\n");
-			is_submenu = 1;
+			is_submenu = selection;
 			update_select();
 		}
 	}
 	else
 	{
-		if(selection >= NELEM(things))
+		if(selection >= things_size)
 			return;
 		display_string(">");
-		display_string(things[selection]);
+		display_string(item_names[things[selection]]);
 		display_string("\n");
+
+		do_command(things[selection]);
 
 		is_submenu = 0;
 		update_select();

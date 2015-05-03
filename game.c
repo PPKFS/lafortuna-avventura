@@ -52,13 +52,20 @@ command commands[NUM_COMMANDS] = {
 	{"look", look, 0},
 	{"examine", examine, 1},
 	{"use", use, 1},
+	{"take", take, 1},
 	{"eat", eat, 1},
 	{"open", open, 1},
 	{"close", close, 1}};
  
-char* things[NUM_COMMANDS] = {0};
+uint8_t things[NUM_COMMANDS] = {255};
 
-item items[NUM_ITEMS] = {{"Help Manual", "An SD card someone has scribbled 'Help Manual' over.", 0}}; 
+uint8_t is_submenu = 0;
+
+char* item_names[NUM_ITEMS] = {"Help Manual", "Heavy Table"};
+char* item_descs[NUM_ITEMS] = {"An SD card someone has scribbled 'Help Manual' over.", "A huge, heavy, oaken table"};
+uint8_t fixed[NUM_ITEMS] = {0, 1, 0}; 
+uint8_t picked_up[NUM_ITEMS] = {0, 0, 0}; 
+uint8_t edible[NUM_ITEMS] = {0,1, 0}; 
 
 void die()
 {
@@ -133,7 +140,6 @@ void led_room(void* r, uint8_t action)
 		default:
 		break;
 	}
-
 }
 
 void final_room(void* r, uint8_t action)
@@ -163,7 +169,7 @@ void ded_room(room* r, uint8_t action)
 room rooms[NUM_ROOMS] = {
 	{"Outside", 
 	"You are outside the LaFortuna. It is really, really hot out here.", {NO_ROOM, NO_ROOM, SD1, NO_ROOM}, outside_room, {NO_ITEM}},
-	{"SD Card Slot", "You are standing in the SD card slot.", {NO_ROOM, NO_ROOM, CORRIDOR_1, OUTSIDE}, 0, {SD_HELP_CARD, NO_ITEM}},
+	{"SD Card Slot", "You are standing in the SD card slot.", {NO_ROOM, NO_ROOM, CORRIDOR_1, OUTSIDE}, 0, {SD_HELP_CARD, 1, NO_ITEM}},
 	{"corridor", "You find yourself in a dimly lit corridor. The walls are lined with pulsing green lights.", 
 	{NO_ROOM, NO_ROOM, IC1, SD1}, 0, {NO_ITEM}},
 	{"", "", {NO_ROOM, NO_ROOM, NO_ROOM, NO_ROOM}, 0, {NO_ITEM}},
@@ -237,7 +243,14 @@ void init_game()
 
 void do_command(int selection)
 {
-	commands[selection].command();
+	if(!is_submenu)
+	{
+		commands[selection].command(255);
+	}
+	else
+	{
+		commands[is_submenu].command(selection);
+	}
 	if(rooms[player_pos].update != 0)
 	{
 		display_string("\n");
@@ -259,45 +272,75 @@ void go(uint8_t dir)
 	}
 }
 
-void north()
+void north(uint8_t item)
 {
 	go(DIR_NORTH);
 }
-void south()
+void south(uint8_t item)
 {
 	go(DIR_SOUTH);
 }
-void east()
+void east(uint8_t item)
 {
 	go(DIR_EAST);
 }
-void west()
+void west(uint8_t item)
 {
 	go(DIR_WEST);
 } 
 
-void look()
+void look(uint8_t item)
 {
 	print_player_pos();
 }
-void examine()
-{
 
+void examine(uint8_t item)
+{
+	if(item == 255)
+		display_string("It's you, our intrepid adventurer and COMP2215 student!");
+	else
+		display_string(item_descs[item]);
 }
-void use()
+
+void use(uint8_t item)
 {
 	if(player_pos == LED_ROOM)
 		rooms[LED_ROOM].update((void*)(&rooms[LED_ROOM]), LED_SWITCH);
 }
-void eat()
+
+void take(uint8_t it)
+{
+	if(it == 255)
+		display_string("You can't take yourself!\n");
+	else
+	{
+		if(fixed[it])
+		{
+			display_string("You can't take that!\n");
+		}
+		else if(picked_up[it])
+		{
+			display_string("You already have that!\n");
+		}
+		else
+		{
+			display_string("You take the ");
+			display_string(item_names[it]);
+			display_string(" and put it in your bag.");
+			picked_up[it] = 1;
+		}
+	}
+}
+
+void eat(uint8_t item)
 {
 
 }
-void open()
+void open(uint8_t item)
 {
 
 }
-void close()
+void close(uint8_t item)
 {
 
 }
