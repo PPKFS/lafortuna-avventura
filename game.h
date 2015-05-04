@@ -49,5 +49,6 @@ void eat(uint8_t);
 void open(uint8_t); 
 void close(uint8_t); 
 void take(uint8_t);
+void inventory(uint8_t);
 
 #endif

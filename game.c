@@ -50,6 +50,7 @@ command commands[NUM_COMMANDS] = {
 	{"south", south, 0},
 	{"east", east, 0},
 	{"west", west, 0},
+	{"inventory", inventory, 0},
 	{"look", look, 0},
 	{"examine", examine, 1},
 	{"use", use, 1},
@@ -62,17 +63,12 @@ uint8_t things[NUM_COMMANDS] = {255};
 
 uint8_t is_submenu = 0;
 
-char* item_names[NUM_ITEMS] = {"Help Manual", "Heavy Table"};
-char* item_descs[NUM_ITEMS] = {"An SD card someone has scribbled 'Help Manual' over.", "A huge, heavy, oaken table"};
-uint8_t fixed[NUM_ITEMS] = {0, 1, 0}; 
-uint8_t picked_up[NUM_ITEMS] = {0, 0, 0}; 
-uint8_t edible[NUM_ITEMS] = {0,1, 0}; 
+char* item_names[NUM_ITEMS] = {0};
+char* item_descs[NUM_ITEMS] = {0};
+uint8_t fixed[NUM_ITEMS] = {0}; 
+uint8_t picked_up[NUM_ITEMS] = {0}; 
+uint8_t edible[NUM_ITEMS] = {0}; 
 
-void die()
-{
-	display_string("You have died. RIP!\nReset the board to play again.");
-	while(1){};
-}
 
 void remove_item(room* r, uint8_t item)
 {
@@ -93,6 +89,29 @@ void remove_item(room* r, uint8_t item)
 		r->items[i-1] = r->items[i];
 	}
 }
+
+void add_item(uint8_t id, char* name, char* desc, uint8_t fix, uint8_t ed)
+{
+	item_names[id] = name;
+	item_descs[id] = desc;
+	fixed[id] = fix;
+	picked_up[id] = 0;
+	edible[id] = ed;
+}
+
+void init_items()
+{
+	add_item(SD_HELP_CARD, "Help Manual", 
+		"An SD card someone has scribbled 'Help Manual' over. It'd probably tell you stuff if you used it.", 0, 0);
+	add_item(1, "Heavy Cheese Table", "A huge, heavy, table..made of cheese. Totally not here for mechanics reasons.", 1, 1);
+}
+
+void die()
+{
+	display_string("You have died. RIP!\nReset the board to play again.");
+	while(1){};
+}
+
 
 void outside_room(void* r, uint8_t action)
 {
@@ -190,7 +209,7 @@ void ded_room(room* r, uint8_t action)
 room rooms[NUM_ROOMS] = {
 	{"Outside", 
 	"You are outside the LaFortuna. It is really, really hot out here.", {NO_ROOM, NO_ROOM, SD1, NO_ROOM}, outside_room, {NO_ITEM}},
-	{"SD Card Slot", "You are standing in the SD card slot.", {NO_ROOM, NO_ROOM, CORRIDOR_1, OUTSIDE}, 0, {SD_HELP_CARD, 1, NO_ITEM}},
+	{"SD Card Slot", "You are standing in the SD card slot.", {NO_ROOM, NO_ROOM, CORRIDOR_1, OUTSIDE}, 0, {0, 1, NO_ITEM}},
 	{"corridor", "You find yourself in a dimly lit corridor. The walls are lined with pulsing green lights.", 
 	{NO_ROOM, NO_ROOM, IC1, SD1}, 0, {NO_ITEM}},
 	{"", "", {NO_ROOM, NO_ROOM, NO_ROOM, NO_ROOM}, 0, {NO_ITEM}},
@@ -233,6 +252,21 @@ room rooms[NUM_ROOMS] = {
 	{NO_ROOM, NO_ROOM, NO_ROOM, NO_ROOM}, ded_room, {NO_ITEM}}
 };
 
+void display_items_in_room()
+{
+	uint8_t i = 0;
+	if(rooms[player_pos].items[i] == 255)
+		return;
+	while(i < NUM_COMMANDS-1 && rooms[player_pos].items[i] != 255)
+	{
+		display_string("There is a ");
+		display_string(item_names[rooms[player_pos].items[i]]);
+		display_string(" here. ");
+		++i;
+	}
+	display_string("\n");
+}
+
 void print_player_pos()
 {
 	display_string(rooms[player_pos].name);
@@ -244,6 +278,8 @@ void print_player_pos()
 	}
 	display_string(rooms[player_pos].desc);
 	display_string("\n");
+	display_items_in_room();
+
 	uint8_t i = 0;
 	for(;i < 4; ++i)
 	{
@@ -259,6 +295,7 @@ void print_player_pos()
 
 void init_game()
 {
+	init_items();
 	print_player_pos();
 }
 
@@ -329,6 +366,20 @@ void use(uint8_t item)
 		rooms[LED_ROOM].update((void*)(&rooms[LED_ROOM]), LED_SWITCH);
 }
 
+void inventory(uint8_t item)
+{
+	display_string("You are carrying: \n");
+	uint8_t i = 0;
+	for(; i < NUM_ITEMS; ++i)
+	{
+		if(picked_up[i])
+		{
+			display_string(item_names[i]);
+			display_string(" ");
+		}
+	}
+}
+
 void take(uint8_t it)
 {
 	if(it == 255)
@@ -379,6 +430,7 @@ void open(uint8_t item)
 {
 
 }
+
 void close(uint8_t item)
 {
 
