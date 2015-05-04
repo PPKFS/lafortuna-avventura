@@ -31,7 +31,7 @@
 #define IC_FLAVOUR "You are standing in a large, spacious room. This seems to be the main unit of the board."
 
 #define SD_HELP_CARD 0
-#define REMOVED_ITEM 254
+
 #define NO_ITEM 255
 
 #define DIR_NORTH 0
@@ -362,22 +362,43 @@ void examine(uint8_t item)
 
 void use(uint8_t item)
 {
-	if(player_pos == LED_ROOM)
+	switch(item)
+	{
+		case SD_HELP_CARD:
+		display_string("You insert the SD card into your SD card reader. A blue screen pops up.");	
+		display_string("It says:\n");
+		display_string("Hello, adventurer! If you are reading this, you have entered LaFortuna, and must be here to slay the evil");
+		display_string(" dragon which is sitting in the back of the LCD screen for some reason! To defeat this beast, you must do");
+		display_string("4 things!\n");
+		display_string("1) Activate the reset switch! 2) Input the secret code into the scrollwheel pad! 3) Break the capacitors, ");
+		display_string("for they are the dragon's secret power source! And finally 4) you must retrieve the sword of +5 dragon slaying!");
+		display_string("\n However, the sword has not been seen in many CPU cycles!\n");		
+		break;
+
+		default:
+		display_string("You fiddle with it for a bit, but can't really use it.");
+		break;
+	}
+	display_string("\n");
 		rooms[LED_ROOM].update((void*)(&rooms[LED_ROOM]), LED_SWITCH);
 }
 
 void inventory(uint8_t item)
 {
+	uint8_t anything = 0;
 	display_string("You are carrying: \n");
 	uint8_t i = 0;
 	for(; i < NUM_ITEMS; ++i)
 	{
 		if(picked_up[i])
 		{
+			anything = 1;
 			display_string(item_names[i]);
 			display_string(" ");
 		}
 	}
+	if(!anything)
+		display_string("nothing. :(");
 }
 
 void take(uint8_t it)
