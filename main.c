@@ -55,6 +55,10 @@ void get_list_of_things()
 	{
 		if(rooms[player_pos].items[i-1] == 255)
 			break;
+		if(rooms[player_pos].items[i-1] == 254)
+		{
+			continue;
+		}
 		things[i] = rooms[player_pos].items[i-1];
 	}
 	things_size = i;

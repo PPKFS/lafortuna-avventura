@@ -31,6 +31,7 @@
 #define IC_FLAVOUR "You are standing in a large, spacious room. This seems to be the main unit of the board."
 
 #define SD_HELP_CARD 0
+#define REMOVED_ITEM 254
 #define NO_ITEM 255
 
 #define DIR_NORTH 0
@@ -71,6 +72,26 @@ void die()
 {
 	display_string("You have died. RIP!\nReset the board to play again.");
 	while(1){};
+}
+
+void remove_item(room* r, uint8_t item)
+{
+	uint8_t i = 0;
+	for(; i < NUM_COMMANDS; i++)
+	{
+		if(r->items[i] == 255)
+			return;
+		else if(r->items[i] == item)
+		{
+			++i;
+			break;
+		}
+	}
+
+	for(; i < NUM_COMMANDS-1; ++i)
+	{
+		r->items[i-1] = r->items[i];
+	}
 }
 
 void outside_room(void* r, uint8_t action)
@@ -328,12 +349,30 @@ void take(uint8_t it)
 			display_string(item_names[it]);
 			display_string(" and put it in your bag.");
 			picked_up[it] = 1;
+			remove_item(&rooms[player_pos], it);
 		}
 	}
 }
 
-void eat(uint8_t item)
+void eat(uint8_t it)
 {
+	if(it == 255)
+		display_string("Don't eat yourself. That's...ew.\n");
+	else
+	{
+		if(!edible[it])
+		{
+			display_string("That doesn't look overly edible.\n");
+		}
+		else
+		{
+			display_string("You eat the ");
+			display_string(item_names[it]);
+			display_string(". Delicious!");
+			picked_up[it] = 0;
+			remove_item(&rooms[player_pos], it);
+		}
+	}
 
 }
 void open(uint8_t item)
