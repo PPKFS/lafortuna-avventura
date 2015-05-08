@@ -40,6 +40,7 @@
 #define CAP_BANK_ITEM 8
 #define MAGIC_SHOE 9
 #define RUSTY_LADDER 10
+#define BUTTON_THING 11
 
 
 #define NO_ITEM 255
@@ -132,6 +133,7 @@ void init_items()
 	add_item(CAP_BANK_ITEM, "capacitor bank", "A bank of capacitors. They're glowing with power.", 1, 0);
 	add_item(MAGIC_SHOE, "magical edible shoe", "It is a shoe that glitters with a strange light. You have an odd urge to eat it. (Seriously, Callum?)", 0, 1);
 	add_item(RUSTY_LADDER, "rusty ladder", "a rusty ladder leading between the silicon catwalk above and the button room below.", 1, 0);
+	add_item(BUTTON_THING, "large floor buttons", "the buttons depress under your feet. They're connected to the scroll wheel.", 1, 0);
 }
 
 void die()
@@ -211,7 +213,20 @@ void final_room(void* r, uint8_t action)
 {
 	switch(action)
 	{
+		case DESCRIPTION:
+		display_string("The dragon roars at you. Who dares disturb my slumber? I'm going to eat you!\n You really need to do something, or leave.");
+		break;
 		case EVERY_TURN:
+		if(reset_pressed && sword_get && capacitors_broken && code_entered)
+		{
+			if(!dragon_slain)
+				display_string("You really, really need to kill the dragon..");
+		}
+		else
+		{
+			display_string("You flail a bit, as the dragon rips your head off. The dragon goes back to sleep. (You missed something!)");
+			die();
+		}
 		break;
 		default:
 		break;
@@ -255,7 +270,7 @@ room rooms[NUM_ROOMS] = {
 	{NO_ROOM, NO_ROOM, IC3, NO_ROOM}, above_scroll_room, {RUSTY_LADDER, NO_ITEM}},
 	{"Scroll Wheel", 
 		"You climb down the ladder and step on the floor of the circular room. The floor seems to depress when you stand on it.", 
-		{NO_ROOM, NO_ROOM, NO_ROOM, NO_ROOM}, 0, {RUSTY_LADDER, NO_ITEM}},
+		{NO_ROOM, NO_ROOM, NO_ROOM, NO_ROOM}, 0, {RUSTY_LADDER, BUTTON_THING, NO_ITEM}},
 	{"GPIO Pins", 
 	"There are a number of holes above you, light streaming in.", {NO_ROOM, NO_ROOM, NO_ROOM, IC4}, 0, {CARDBOARD, NO_ITEM}},
 	{"A Corridor", "You find yourself in a dimly lit corridor. The walls are lined with pulsing green lights.", 
@@ -268,7 +283,7 @@ room rooms[NUM_ROOMS] = {
 	{NO_ROOM, CORRIDOR_3, NO_ROOM, NO_ROOM}, 0, {NO_ITEM}},
 	{"An Ominous Corridor", 
 	"As you walk down the corridor, you have a very ominous feeling. Almost like something very bad is at the end of the corridor.", 
-	{NO_ROOM, NO_ROOM, CORRIDOR_3, NO_ROOM}, 0, {NO_ITEM}},
+	{NO_ROOM, NO_ROOM, CORRIDOR_3, LCD_SCREEN_ROOM}, 0, {NO_ITEM}},
 	{"The LCD Screen", 
 	"As you walk into the LCD screen, a cold breeze brushes over you. A giant dragon flies down from the ceiling and lands in front of you.", 
 	{NO_ROOM, NO_ROOM, CORRIDOR_FINAL, NO_ROOM}, final_room, {NO_ITEM}},
@@ -460,6 +475,29 @@ void use(uint8_t item)
 				player_pos = SCROLL_CORR;
 			}
 			print_player_pos();
+		break;
+		case BUTTON_THING:
+			if(code_entered)
+			{
+				display_string("you jump around for a bit but nothing happens.");
+			}
+			else
+			{
+				display_string("You jump around on the buttons randomly. You entered the secret code by accident!");
+				code_entered = 1;
+			}
+		break;
+		case SUPER_SORD:
+			if(player_pos == LCD_SCREEN_ROOM && capacitors_broken && sword_get && code_entered && reset_pressed)
+			{
+				display_string("You brandish the sword and flail it around your head. You charge, screaming, at the dragon. You sink ");
+				display_string("the sword into the dragon's side.");
+				display_string("The dragon screams out in pain, and falls over, dead.\n");
+				display_string("Congratulations! You killed the evil dragon! Unfortunately, you realised you forgot to do your revision ");
+				display_string("for the upcoming COMP2215 exam. You have died.");
+				dragon_slain = 100;
+				die();
+			}
 		break;
 		default:
 		display_string("You fiddle with it for a bit, but can't really use it.");
