@@ -59,9 +59,25 @@ void get_list_of_things()
 		{
 			continue;
 		}
+		char* f = "";
+		sprintf(f, "%d %s",rooms[player_pos].items[i-1], item_names[rooms[player_pos].items[i-1]]);
+		display_string(f);
 		things[i] = rooms[player_pos].items[i-1];
 	}
-	things_size = i;
+	uint8_t k = i;
+	volatile uint8_t j = 0;
+	for(; j <= NUM_ITEMS; ++j)
+	{
+		if(picked_up[j])
+		{
+			k += 1;
+			char* f = "";
+			sprintf(f, "%d %s",j, item_names[j]);
+			display_string(f);
+			things[k] = 6;
+		}
+	}
+	things_size = k;
 }
 
 void update_select()
@@ -92,6 +108,7 @@ void update_select()
 	else
 	{
 		get_list_of_things();
+		display_string(item_names[things[2]]);
 		for(i = 0; i < things_size; ++i)
 		{
 			uint8_t x = (i / CMD_Y_MAX) * 80;

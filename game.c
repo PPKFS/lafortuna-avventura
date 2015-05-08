@@ -31,6 +31,16 @@
 #define IC_FLAVOUR "You are standing in a large, spacious room. This seems to be the main unit of the board."
 
 #define SD_HELP_CARD 0
+#define RESET_BUTT 2
+#define SUPER_SORD 3
+#define CARDBOARD 4
+#define EVIL_DRAGON 5
+#define PULSE_HAMMER 6
+#define MOTH 7
+#define CAP_BANK_ITEM 8
+#define MAGIC_SHOE 9
+#define RUSTY_LADDER 10
+
 
 #define NO_ITEM 255
 
@@ -69,6 +79,13 @@ uint8_t fixed[NUM_ITEMS] = {0};
 uint8_t picked_up[NUM_ITEMS] = {0}; 
 uint8_t edible[NUM_ITEMS] = {0}; 
 
+uint8_t reset_pressed = 0;
+uint8_t capacitors_broken = 0;
+uint8_t sword_get = 0;
+uint8_t dragon_slain = 0;
+uint8_t code_entered = 0;
+uint8_t is_shoeicorn = 0;
+
 
 void remove_item(room* r, uint8_t item)
 {
@@ -104,11 +121,30 @@ void init_items()
 	add_item(SD_HELP_CARD, "Help Manual", 
 		"An SD card someone has scribbled 'Help Manual' over. It'd probably tell you stuff if you used it.", 0, 0);
 	add_item(1, "Heavy Cheese Table", "A huge, heavy, table..made of cheese. Totally not here for mechanics reasons.", 1, 1);
+	add_item(RESET_BUTT, "reset button", "The button that resets the entire board. ", 1, 0);
+	add_item(SUPER_SORD, "sword of +5 dragon slaying",
+		"The fabled sword of +5 dragon slaying. It is a blue sword embedded with green LEDs.", 0, 0);
+	add_item(CARDBOARD, "pile of suspicious looking cardboard boxes", 
+		"a pile of cardboard boxes. It looks like someone placed them here recently. The top flap of one of the boxes is open.", 1, 0);
+	add_item(PULSE_HAMMER, "pulsing hammer", 
+		"This is a heavy sledgehammer, seemingly adapted to use an analog input as a power source. As such, the entire hammer slowly pulses in your hands. It's weird.", 0, 0);
+	add_item(MOTH, "moth", "A fluffy moth. You're not going to eat it, are you!?", 0, 1);
+	add_item(CAP_BANK_ITEM, "capacitor bank", "A bank of capacitors. They're glowing with power.", 1, 0);
+	add_item(MAGIC_SHOE, "magical edible shoe", "It is a shoe that glitters with a strange light. You have an odd urge to eat it. (Seriously, Callum?)", 0, 1);
+	add_item(RUSTY_LADDER, "rusty ladder", "a rusty ladder leading between the silicon catwalk above and the button room below.", 1, 0);
 }
 
 void die()
 {
 	display_string("You have died. RIP!\nReset the board to play again.");
+	display_string("Your score was: ");
+	uint8_t score = 0;
+	score += reset_pressed + capacitors_broken + sword_get + code_entered + dragon_slain;
+	char* f = "";
+	sprintf(f, "%d", score);
+	display_string(f);
+	if(is_shoeicorn)
+		display_string("\nYou were a shoeicorn.");
 	while(1){};
 }
 
@@ -154,17 +190,6 @@ void led_room(void* r, uint8_t action)
 	static uint8_t led_is_on = 0;
 	switch(action)
 	{
-		case LED_SWITCH:
-		if(led_is_on)
-		{
-			display_string("You turn the LED off.\n");
-			led_is_on = 0;
-		}
-		else
-		{
-			display_string("You turn the LED on.\n");
-			led_is_on = 1;
-		}
 		break;
 		case EVERY_TURN:
 		break;
@@ -214,27 +239,27 @@ room rooms[NUM_ROOMS] = {
 	{NO_ROOM, NO_ROOM, IC1, SD1}, 0, {NO_ITEM}},
 	{"", "", {NO_ROOM, NO_ROOM, NO_ROOM, NO_ROOM}, 0, {NO_ITEM}},
 	{"Integrated Circuit Unit, North Side", IC_FLAVOUR, {NO_ROOM, IC2, RESET, CORRIDOR_1}, 0, {NO_ITEM}},
-	{"Integrated Circuit Unit, North-Central Side", IC_FLAVOUR, {IC1, IC3, AVCC, LED_ROOM}, 0, {NO_ITEM}},
+	{"Integrated Circuit Unit, North-Central Side", IC_FLAVOUR, {IC1, IC3, AVCC, LED_ROOM}, 0, {MOTH, NO_ITEM}},
 	{"Integrated Circuit Unit, South-Central Side", IC_FLAVOUR, {IC2, IC4, USB, SCROLL_CORR}, 0, {NO_ITEM}},
 	{"Integrated Circuit Unit, South Side", IC_FLAVOUR, {IC3, BATT, EXT_PIN_1, CORRIDOR_3}, 0, {NO_ITEM}},
 	{"Reset Button", "Above you, you can see the reset switch. You could probably just about reach it from here.",
-	 {NO_ROOM, NO_ROOM, NO_ROOM, IC1}, 0, {NO_ITEM}},
+	 {NO_ROOM, NO_ROOM, NO_ROOM, IC1}, 0, {RESET_BUTT, NO_ITEM}},
 	{"AVCC Switch Room", "The walls pulse around you. Everything is oscillating wildly in here. It's giving you a headache.", 
-	{NO_ROOM, NO_ROOM, NO_ROOM, IC2}, 0, {NO_ITEM}},
+	{NO_ROOM, NO_ROOM, NO_ROOM, IC2}, 0, {PULSE_HAMMER, NO_ITEM}},
 	{"LED Room", "", 
-	{NO_ROOM, NO_ROOM, IC2, SD1}, led_room, {NO_ITEM}},
+	{NO_ROOM, NO_ROOM, IC2, SD1}, led_room, {MAGIC_SHOE, NO_ITEM}},
 	{"USB Port", 
 	"As you walk to the edge of the room, you look out the USB socket. It's a long, long way down. You'd probably die if you fell out.", 
 	{NO_ROOM, NO_ROOM, OUTSIDE_2, IC3}, 0, {NO_ITEM}},
 	{"Above Scroll Wheel", "You find yourself on a silicon catwalk. Below you is a circular room, split into 5 sections.", 
-	{NO_ROOM, NO_ROOM, IC3, NO_ROOM}, above_scroll_room, {NO_ITEM}},
+	{NO_ROOM, NO_ROOM, IC3, NO_ROOM}, above_scroll_room, {RUSTY_LADDER, NO_ITEM}},
 	{"Scroll Wheel", 
 		"You climb down the ladder and step on the floor of the circular room. The floor seems to depress when you stand on it.", 
-		{NO_ROOM, NO_ROOM, NO_ROOM, NO_ROOM}, 0, {NO_ITEM}},
+		{NO_ROOM, NO_ROOM, NO_ROOM, NO_ROOM}, 0, {RUSTY_LADDER, NO_ITEM}},
 	{"GPIO Pins", 
-	"There are a number of holes above you, light streaming in.", {NO_ROOM, NO_ROOM, NO_ROOM, IC4}, 0, {NO_ITEM}},
+	"There are a number of holes above you, light streaming in.", {NO_ROOM, NO_ROOM, NO_ROOM, IC4}, 0, {CARDBOARD, NO_ITEM}},
 	{"A Corridor", "You find yourself in a dimly lit corridor. The walls are lined with pulsing green lights.", 
-		{EXT_PIN_2, ROTARY, IC4, CORRIDOR_FINAL}, 0, {NO_ITEM}},
+		{NO_ROOM, ROTARY, IC4, CORRIDOR_FINAL}, 0, {NO_ITEM}},
 	{"Rotary Encoder Control Room", "The room is spinning round and round and round and round...", {CORRIDOR_3, NO_ROOM, NO_ROOM, NO_ROOM}, 
 		0, {NO_ITEM}},
 	{"Battery Room Place", "Battery stuff.", {IC4, NO_ROOM, NO_ROOM, CAP_BANK}, 0, {NO_ITEM}},
@@ -299,6 +324,19 @@ void init_game()
 	print_player_pos();
 }
 
+void check_for_win()
+{
+	static is_win = 0;
+	if(is_win)
+		return;
+
+	if(capacitors_broken && sword_get && code_entered && reset_pressed)
+	{
+		display_string("You have done all the steps needed! You can go kill the evil dragon now!");
+		is_win = 1;
+	}
+}
+
 void do_command(int selection)
 {
 	if(!is_submenu)
@@ -314,6 +352,8 @@ void do_command(int selection)
 		display_string("\n");
 		rooms[player_pos].update((void*)(&rooms[player_pos]), EVERY_TURN);
 	}
+
+	check_for_win();
 }
 
 void go(uint8_t dir)
@@ -374,7 +414,53 @@ void use(uint8_t item)
 		display_string("for they are the dragon's secret power source! And finally 4) you must retrieve the sword of +5 dragon slaying!");
 		display_string("\n However, the sword has not been seen in many CPU cycles!\n");		
 		break;
-
+		case RESET_BUTT:
+		if(reset_pressed)
+			display_string("You decide against pressing the reset button again.");
+		else
+		{
+			display_string("You flick the reset button. Everything shudders for a minute and the lights flash on and off. After a");
+			display_string(" bit, everything settles down. You've reset the device successfully! Score 1 point!");
+			reset_pressed = 1;
+		}
+		break;
+		case CARDBOARD:
+			display_string("You open the topmost cardboard box. Inside the box you see a fancy sword!");
+			rooms[player_pos].items[1] = SUPER_SORD;
+			rooms[player_pos].items[2] = 255;
+		break;
+		case PULSE_HAMMER:
+			if(player_pos == CAP_BANK)
+			{
+				display_string("You take a step back and put your full force behind the hammer as you swing it at the capacitor bank.");
+				if(capacitors_broken)
+				{
+					display_string("You enjoy taking your anger out on the broken capacitor bank for a while.");
+				}
+				else
+				{
+					display_string("There is a sickeningly loud crash as glass flies everywhere. The capacitor bank is very broken.");
+					display_string("+1 point!");
+					capacitors_broken = 1;
+					item_descs[CAP_BANK_ITEM] = "A very smashed up and broken capacitor bank.";
+				}
+			}
+			else
+				display_string("You don't really want to break anything in here.");
+		break;
+		case RUSTY_LADDER:
+			if(player_pos == SCROLL_CORR)
+			{
+				display_string("You climb down the ladder.");
+				player_pos = SCROLL_HUB;
+			}
+			else
+			{
+				display_string("You climb up the ladder.");
+				player_pos = SCROLL_CORR;
+			}
+			print_player_pos();
+		break;
 		default:
 		display_string("You fiddle with it for a bit, but can't really use it.");
 		break;
@@ -421,6 +507,11 @@ void take(uint8_t it)
 			display_string(item_names[it]);
 			display_string(" and put it in your bag.");
 			picked_up[it] = 1;
+			if(it == SUPER_SORD)
+			{
+				display_string("You got the sword! +1 point!");
+				sword_get = 1;
+			}
 			remove_item(&rooms[player_pos], it);
 		}
 	}
@@ -438,9 +529,18 @@ void eat(uint8_t it)
 		}
 		else
 		{
+			if(it == MAGIC_SHOE)
+			{
+				display_string("You eat the...shoe. It tastes of cherries. You feel rather weird...and a horn starts to grow out of your head.");
+				display_string("You have becoe a shoeicorn. (???)");
+				is_shoeicorn = 1;
+			}
+			else
+			{
 			display_string("You eat the ");
 			display_string(item_names[it]);
 			display_string(". Delicious!");
+			}
 			picked_up[it] = 0;
 			remove_item(&rooms[player_pos], it);
 		}
